@@ -79,7 +79,7 @@ static int pushRecord(caster_t *caster, DBENTRY *pent)
     if(dbIsAlias(pent))
         return 0;
 
-    rid = casterSendRecord(caster, prec->rdes->name, prec->name);
+    rid = casterSendRecord(caster, prec->rdes->name, prec->name, prec->desc);
     if(rid<=0)
         return rid;
 

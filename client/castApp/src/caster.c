@@ -173,18 +173,19 @@ void casterMsg(caster_t *self, const char* msg, ...)
 }
 
 static
-ssize_t casterSendRA(caster_t* self, epicsUInt8 type, size_t rid, const char* rtype, const char* rname)
+ssize_t casterSendRA(caster_t* self, epicsUInt8 type, size_t rid, const char* rtype, const char* rname, const char* rdesc)
 {
     union casterTCPBody buf;
     epicsUInt32 blen = sizeof(buf.c_add);
-    size_t lt=rtype ? strlen(rtype) : 0, ln=strlen(rname);
+    size_t lt=rtype ? strlen(rtype) : 0, ln=strlen(rname), ld=strlen(rdesc);
 
     buf.c_add.rid = htonl(rid);
     buf.c_add.rtype = type;
     buf.c_add.rtlen = lt;
     buf.c_add.rnlen = htons(ln);
+    buf.c_add.rdlen = htonl(ld);
 
-    blen += lt + ln;
+    blen += lt + ln + ld;
 
     if(casterSendPHead(self->csock, 0x0003, blen)!=1)
         return -1;
@@ -198,10 +199,13 @@ ssize_t casterSendRA(caster_t* self, epicsUInt8 type, size_t rid, const char* rt
     if(shSendAll(self->csock, rname, ln, 0)!=1)
         return -1;
 
+    if(shSendAll(self->csock, rdesc, ld, 0)!=1)
+        return -1;
+
     return 0;
 }
 
-ssize_t casterSendRecord(caster_t* self, const char* rtype, const char* rname)
+ssize_t casterSendRecord(caster_t* self, const char* rtype, const char* rname, const char* rdesc)
 {
     size_t rid;
 
@@ -210,14 +214,14 @@ ssize_t casterSendRecord(caster_t* self, const char* rtype, const char* rname)
 
     rid = self->nextRecID++;
 
-    if(casterSendRA(self, 0, rid, rtype, rname))
+    if(casterSendRA(self, 0, rid, rtype, rname, rdesc))
         return -1;
     return rid;
 }
 
 ssize_t casterSendAlias(caster_t* self, size_t rid, const char* rname)
 {
-    return casterSendRA(self, 1, rid, NULL, rname);
+    return casterSendRA(self, 1, rid, NULL, rname, "alias");
 }
 
 int casterSendInfo(caster_t *self, ssize_t rid, const char* name, const char* val)
