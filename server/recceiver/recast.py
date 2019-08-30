@@ -214,8 +214,8 @@ class Transaction(object):
             return
         for I in self.infos.items():
             _log.info(" epicsEnvSet(\"%s\",\"%s\")", *I)
-        for rid, (rname, rtype) in self.addrec.items():
-            _log.info(" record(%s, \"%s\") {", rtype, rname)
+        for rid, (rname, rtype, rdesc) in self.addrec.items():
+            _log.info(" record(%s, \"%s\", \"%s\") {", rtype, rname, rdesc)
             for A in self.aliases.get(rid, []):
                 _log.info("  alias(\"%s\")", A)
             for I in self.recinfos.get(rid, {}).items():
