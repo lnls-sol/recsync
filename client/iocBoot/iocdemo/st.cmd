@@ -1,12 +1,14 @@
-#!../../bin/linux-x86_64-debug/demo
+#!../../bin/linux-x86_64/demo
 
 ## You may have to change demo to something else
 ## everywhere it appears in this file
 
 < envPaths
 
+cd "${TOP}"
+
 ## Register all support components
-dbLoadDatabase("../../dbd/demo.dbd",0,0)
+dbLoadDatabase("dbd/demo.dbd",0,0)
 demo_registerRecordDeviceDriver(pdbbase) 
 
 var(reccastTimeout, 5.0)
@@ -18,7 +20,9 @@ epicsEnvSet("LOCATION", "myplace")
 
 
 ## Load record instances
-dbLoadRecords("../../db/reccaster.db", "P=test:")
-dbLoadRecords("../../db/somerecords.db","P=test:")
+dbLoadRecords("db/reccaster.db", "P=test:")
+dbLoadRecords("db/somerecords.db","P=test:")
+
+cd "${TOP}/iocBoot/${IOC}"
 
 iocInit()
