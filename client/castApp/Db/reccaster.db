@@ -15,3 +15,9 @@ record(stringin, "$(P)Msg-I") {
   field(PINI, "RUNNING")
   field(SCAN, "I/O Intr")
 }
+
+record(stringin, "$(P)Ip-I") {
+  field(DTYP, "RecCaster1")
+  field(PINI, "RUNNING")
+  field(SCAN, "I/O Intr")
+}

@@ -24,6 +24,7 @@ typedef struct {
     casterState laststate;
     int intraccept;
     char lastmsg[MAX_STRING_SIZE];
+    char hostip[MAX_STRING_SIZE];
 } dpriv;
 
 static dpriv thepriv;
@@ -34,6 +35,7 @@ void dsetshowmsg(void* arg, struct _caster_t* self)
     epicsMutexMustLock(thepriv.lock);
     thepriv.laststate = self->current;
     strcpy(thepriv.lastmsg, self->lastmsg);
+    strcpy(thepriv.hostip, self->hostip);
     epicsMutexUnlock(thepriv.lock);
     if(thepriv.intraccept)
         scanIoRequest(thepriv.scan);
@@ -56,6 +58,7 @@ static void casthook(initHookState state)
 
     thecaster.getrecords = &casterPushPDB;
     thecaster.onmsg = &dsetshowmsg;
+    thecaster.onip = &dsetshowmsg;
 
     if(casterStart(&thecaster)) {
         printf("reccaster failed to start...\n");
@@ -72,6 +75,7 @@ static void reccasterRegistrar(void)
     scanIoInit(&thepriv.scan);
     thepriv.laststate=casterStateInit;
     strcpy(thepriv.lastmsg, "Initializing");
+    strcpy(thepriv.hostip, "Initializing");
 }
 
 static long init_record(void* prec)
@@ -103,6 +107,16 @@ static long read_stringin(stringinRecord *prec)
     return 0;
 }
 
+static long read_stringinip(stringinRecord *prec)
+{
+    epicsMutexMustLock(thepriv.lock);
+    strncpy(prec->val, thepriv.hostip, sizeof(prec->val));
+    prec->val[sizeof(prec->val)-1] = '\0';
+    printf("%s\n", prec->val);
+    epicsMutexUnlock(thepriv.lock);
+    return 0;
+}
+
 typedef struct {
     dset common;
     DEVSUPFUN read;
@@ -120,6 +134,11 @@ static dset5 devCasterSIMsg = {
     (DEVSUPFUN)&read_stringin
 };
 
+static dset5 devCasterSIIp = {
+    DSETCOMMON,
+    (DEVSUPFUN)&read_stringinip
+};
+
 #include <epicsExport.h>
 
 epicsExportAddress(double,reccastTimeout);
@@ -127,5 +146,6 @@ epicsExportAddress(double,reccastMaxHoldoff);
 
 epicsExportAddress(dset, devCasterMBBIState);
 epicsExportAddress(dset, devCasterSIMsg);
+epicsExportAddress(dset, devCasterSIIp);
 
 epicsExportRegistrar(reccasterRegistrar);

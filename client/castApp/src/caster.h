@@ -51,6 +51,7 @@ typedef struct _caster_t {
     void *arg;
     int (*getrecords)(void*, struct _caster_t*);
     void (*onmsg)(void*, struct _caster_t*);
+    void (*onip)(void*, struct _caster_t*);
 
     casterState current;
 
@@ -59,6 +60,7 @@ typedef struct _caster_t {
 
     int shutdown;
     char lastmsg[MAX_STRING_SIZE];
+    char hostip[MAX_STRING_SIZE];
 } caster_t;
 
 epicsShareFunc
@@ -67,6 +69,9 @@ void casterMsg(caster_t *self, const char* msg, ...) EPICS_PRINTF_STYLE(2,3);
 #define ERRTO(TAG, CASTER, ...) do{ casterMsg(CASTER, __VA_ARGS__); goto TAG; }while(0)
 
 #define ERRRET(VAL, CASTER, ...) do{ casterMsg(CASTER, __VA_ARGS__); return (VAL); }while(0)
+
+epicsShareFunc
+void casterIp(caster_t *self, const char* msg, ...) EPICS_PRINTF_STYLE(2,3);
 
 epicsShareFunc
 void casterInit(caster_t *self);
