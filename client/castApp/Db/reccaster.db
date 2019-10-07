@@ -8,16 +8,19 @@ record(mbbi, "$(P)State-Sts") {
   field(TWST, "Connecting")
   field(THST, "Uploading")
   field(FRST, "Done")
+  field(DESC, "Connection status")
 }
 
 record(stringin, "$(P)Msg-I") {
   field(DTYP, "RecCaster")
   field(PINI, "RUNNING")
   field(SCAN, "I/O Intr")
+  field(DESC, "Connection message")
 }
 
 record(stringin, "$(P)Ip-I") {
-  field(DTYP, "RecCaster1")
+  field(DTYP, "RecCasterIp")
   field(PINI, "RUNNING")
   field(SCAN, "I/O Intr")
+  field(DESC, "IP of connected server")
 }
