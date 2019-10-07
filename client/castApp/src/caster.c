@@ -28,6 +28,7 @@ static void casterThread(void* junk)
     caster_t *self=junk;
 
     casterMsg(self, "Starting");
+    casterIp(self, "0.0.0.0");
 
     while(1) {
         int shutdown;
@@ -49,6 +50,7 @@ static void casterThread(void* junk)
 
         self->current = casterStateListen;
         casterMsg(self, "Searching");
+        casterIp(self, "0.0.0.0");
 
 
         if(doCasterUDPPhase(self))
@@ -81,6 +83,8 @@ static void casterThread(void* junk)
             char abuf[80];
             sockAddrToA(&self->nameserv.sa, abuf, sizeof(abuf));
             casterMsg(self, "Connecting to: %s", abuf);
+            // TODO: HERE
+            casterIp(self, abuf, abuf);
         }
 
         if(!doCasterTCPPhase(self))
@@ -91,10 +95,12 @@ static void casterThread(void* junk)
             char abuf[80];
             sockAddrToA(&self->nameserv.sa, abuf, sizeof(abuf));
             casterMsg(self, "Lost server: %s", abuf);
+            casterIp(self, "0.0.0.0");
         }
     }
 
     casterMsg(self, "Stopping");
+    casterIp(self, "0.0.0.0");
 
     epicsEventSignal(self->shutdownEvent);
 }
@@ -106,6 +112,13 @@ void casterShowMsgDefault(void* arg, struct _caster_t* self)
     errlogMessage("\n");
 }
 
+static
+void casterShowIpDefault(void* arg, struct _caster_t* self)
+{
+    errlogMessage(self->hostip);
+    errlogMessage("\n");
+}
+
 void casterInit(caster_t *self)
 {
     memset(self, 0, sizeof(*self));
@@ -114,6 +127,7 @@ void casterInit(caster_t *self)
     self->lock = epicsMutexMustCreate();
     self->nextRecID = 1;
     self->onmsg = &casterShowMsgDefault;
+    self->onip = &casterShowIpDefault;
     self->current = casterStateInit;
     self->timeout = reccastTimeout;
 
@@ -170,6 +184,25 @@ void casterMsg(caster_t *self, const char* msg, ...)
     self->lastmsg[sizeof(self->lastmsg)-1] = '\0';
 
     (*self->onmsg)(self->arg, self);
+}
+
+void casterIp(caster_t *self, const char* msg, ...)
+{
+    int ret;
+    va_list args;
+
+    va_start(args, msg);
+    ret = epicsVsnprintf(self->hostip, sizeof(self->hostip), msg, args);
+    va_end(args);
+
+    if(ret<0) {
+        errlogMessage("casterIp failed\n");
+        return;
+    }
+
+    self->hostip[sizeof(self->hostip)-1] = '\0';
+
+    (*self->onip)(self->arg, self);
 }
 
 static
