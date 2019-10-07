@@ -112,7 +112,6 @@ static long read_stringinip(stringinRecord *prec)
     epicsMutexMustLock(thepriv.lock);
     strncpy(prec->val, thepriv.hostip, sizeof(prec->val));
     prec->val[sizeof(prec->val)-1] = '\0';
-    printf("%s\n", prec->val);
     epicsMutexUnlock(thepriv.lock);
     return 0;
 }

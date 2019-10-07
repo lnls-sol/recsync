@@ -201,7 +201,6 @@ void casterIp(caster_t *self, const char* msg, ...)
     }
 
     self->hostip[sizeof(self->hostip)-1] = '\0';
-    printf("%s\n", self->hostip);
 
     (*self->onip)(self->arg, self);
 }
