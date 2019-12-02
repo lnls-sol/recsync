@@ -19,10 +19,14 @@ reccaster_SRCS += dbcb.c
 
 reccaster_LIBS += $(EPICS_BASE_IOC_LIBS)
 
+reccaster_SYS_LIBS_WIN32 = ws2_32
+
 DBD += reccaster.dbd
 
 PROD_LIBS += reccaster
 PROD_LIBS += $(EPICS_BASE_IOC_LIBS)
+
+PROD_SYS_LIBS_WIN32 = ws2_32
 
 TESTPROD_HOST += testsock
 testsock_SRCS += testsock.c

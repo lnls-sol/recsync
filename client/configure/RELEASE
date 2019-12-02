@@ -22,7 +22,7 @@
 #TEMPLATE_TOP=$(EPICS_BASE)/templates/makeBaseApp/top
 
 # EPICS_BASE usually appears last so other apps can override stuff:
-EPICS_BASE = /usr/local/epics/base
+EPICS_BASE = C:/EPICS/base-3.15.6
 
 # Set RULES here if you want to take build rules from somewhere
 # other than EPICS_BASE:

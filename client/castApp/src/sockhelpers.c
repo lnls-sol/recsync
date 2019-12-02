@@ -1,5 +1,10 @@
 #include <string.h>
 #include <stdio.h>
+//#include <afunix.h>
+//#include <windows.h>
+//#include <winsock2.h>
+//#include <ws2tcpip.h>
+#pragma comment(lib, "Ws2_32.lib")
 
 #include <epicsTypes.h>
 
@@ -31,10 +36,12 @@ void shSetTimeout(shSocket *s, double val)
 SOCKET shCreateSocket(int domain, int type, int protocol)
 {
     SOCKET sd = epicsSocketCreate(domain, type, protocol);
+    printf("after sd(shCreateSocket)\n");
     int ret;
     osiSockIoctl_t flag;
 
     if(sd==INVALID_SOCKET)
+        printf("sd==INVALID_SOCKET(shCreateSocket)\n");
         return sd;
 
     /* set non-blocking IO */
@@ -42,10 +49,12 @@ SOCKET shCreateSocket(int domain, int type, int protocol)
     ret = socket_ioctl(sd, FIONBIO, &flag);
 
     if(ret) {
+        printf("ret true(shCreateSocket)\n");
         epicsSocketDestroy(sd);
         sd = INVALID_SOCKET;
     }
 
+    printf("normal return(shCreateSocket)\n");
     return sd;
 }
 
@@ -62,10 +71,14 @@ int socketpair_compat(int af, int st, int p, SOCKET sd[2])
     }
 
     listener = epicsSocketCreate(AF_INET, SOCK_STREAM, 0);
+    printf("after listener\n");
     sd[0] = INVALID_SOCKET;
+    printf("before sd1(compat)\n");
     sd[1] = shCreateSocket(AF_INET, SOCK_STREAM, 0);
+    printf("after sd1(compat)\n");
 
     if(listener==INVALID_SOCKET || sd[1]==INVALID_SOCKET) {
+        printf("(listener==INVALID_SOCKET || sd[1]==INVALID_SOCKET)\n");
         SOCKERRNOSET(SOCK_EMFILE);
         goto fail;
     }
@@ -73,23 +86,35 @@ int socketpair_compat(int af, int st, int p, SOCKET sd[2])
     memset(ep, 0, sizeof(ep));
     ep[0].ia.sin_family = AF_INET;
     ep[0].ia.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-
-    if(bind(listener, &ep[0].sa, sizeof(ep[0])))
-        goto fail;
-
-    if(getsockname(listener, &ep[0].sa, &slen))
-        goto fail;
-
-    if(listen(listener, 2))
-        goto fail;
-
+    printf("copied mem(compat)\n");
+    printf("ha(compat)\n");
+    if(bind(listener, &ep[0].sa, sizeof(ep[0]))){
+        printf("(bind)\n");
+        goto fail;}
+    printf("ha0(compat)\n");
+    if(getsockname(listener, &ep[0].sa, &slen)){
+        printf("(getsockname)\n");
+        printf("add: %s(getsockname)\n", ep[0].sa.sa_data);
+        printf("len: %d(getsockname)\n", slen);
+        goto fail;}
+    printf("ha1(compat)\n");
+    printf("add: %s(getsockname)\n", ep[0].sa.sa_data);
+    printf("len: %d(getsockname)\n", slen);
+    if(listen(listener, 2)) {
+        printf("(listen)\n");
+        goto fail;}
+    printf("ha2(compat)\n");
     /* we can't possibly succeed immediately */
-    if(connect(sd[1], &ep[0].sa, sizeof(ep[0]))!=-1)
-        goto fail;
-
-    if(SOCKERRNO!=SOCK_EINPROGRESS)
-        goto fail;
-
+    if(connect(sd[1], &ep[0].sa, sizeof(ep[0]))!=0) {
+        printf("(connect)\n");
+        goto fail;}
+    printf("ha3(compat)\n");
+    printf("get: %d, expected:%d\n", SOCKERRNO, WSAEWOULDBLOCK);
+    //if(SOCKERRNO!=WSAEWOULDBLOCK){
+    //    printf("(SOCKERRNO!=SOCK_EINPROGRESS)\n");
+    //    goto fail;}
+    printf("ha4(compat)\n");
+    printf("before loop(compat)\n");
     while(1) {
         int err;
         shSocket atemp;
@@ -133,16 +158,20 @@ int socketpair_compat(int af, int st, int p, SOCKET sd[2])
             goto fail;
     }
 
+    printf("before final destroy(compat)\n");
     epicsSocketDestroy(listener);
 
     return 0;
 fail:
+    printf("entered fail(fail)\n");
     if(listener!=INVALID_SOCKET)
-        epicsSocketDestroy(sd[0]);
-    if(listener!=INVALID_SOCKET)
+        epicsSocketDestroy(listener);
+    if(sd[0]!=INVALID_SOCKET)
         epicsSocketDestroy(sd[0]);
     if(sd[1]!=INVALID_SOCKET)
         epicsSocketDestroy(sd[1]);
+
+    printf("before return ret(fail) retvalue=%d\n", ret);
     return ret;
 }
 
@@ -151,7 +180,8 @@ int shSocketPair(SOCKET sd[2])
 #if __unix__
     return socketpair(AF_LOCAL, SOCK_STREAM, 0, sd);
 #else
-    return socketpair_compat(AF_INET, SOCK_STREAM, 0, sd);
+    return socketpair_compat(AF_UNIX, SOCK_STREAM, 0, sd);
+    // return socketpair(AF_UNIX, SOCK_STREAM, 0, sd);
 #endif
 }
 

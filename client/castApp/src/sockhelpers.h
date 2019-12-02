@@ -4,11 +4,22 @@
 #include <epicsTypes.h>
 #include <osiSock.h>
 
+#if defined(_MSC_VER)
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
+#endif
+
 #ifndef SOCKERRNOSET
-# if defined(WIN32) || defined(WIN64)
-#   define SOCKERRNOSET(E)  WSASetLastError(E)
+# if defined(WIN32) || defined(WIN64) || defined(_MSC_VER)
+#   define SOCKERRNOSET(E) WSASetLastError(E)
 # else
 #   define SOCKERRNOSET(E) do{ SOCKERRNO = (E); }while(0)
+# endif
+#endif
+
+#ifndef SOCKERRNO
+# if defined(WIN32) || defined(WIN64) || defined(_MSC_VER)
+#   define SOCKERRNO  WSAGetLastError()
 # endif
 #endif
 
@@ -17,6 +28,8 @@
 #ifndef MSG_NOSIGNAL
 #  define MSG_NOSIGNAL 0
 #endif
+
+#include <epicsExport.h>
 
 typedef struct {
     SOCKET sd; /* data socket */

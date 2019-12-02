@@ -32,6 +32,8 @@ demo_SRCS_vxWorks += -nil-
 # Finally link to the EPICS Base libraries
 demo_LIBS += $(EPICS_BASE_IOC_LIBS)
 
+BIN_INSTALLS_WIN32 += $(wildcard $(EPICS_BASE)/bin/windows-x64/*.dll)
+
 #===========================
 
 include $(TOP)/configure/RULES
