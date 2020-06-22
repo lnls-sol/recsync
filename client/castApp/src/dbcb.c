@@ -35,6 +35,10 @@ static const char* envs[] =
     /* iocStats */
     "ENGINEER",
     "LOCATION",
+    
+    /* LNLS Sirius BL info */
+    "BEAMLINE",
+    "HUTCH",
 
     NULL
 };
