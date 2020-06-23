@@ -7,7 +7,7 @@ from zope.interface import implementer
 
 from twisted import plugin
 from twisted.python import usage, log
-from twisted.internet import reactor, defer
+from twisted.internet import reactor, defer, task
 from twisted.application import service
 
 from .recast import CastFactory
@@ -32,11 +32,34 @@ class RecService(service.MultiService):
         self.annperiod = float(config.get('announceInterval', '15.0'))
         self.tcptimeout = float(config.get('tcptimeout', '15.0'))
         self.commitperiod = float(config.get('commitInterval', '5.0'))
+        self.addrperiod = float(config.get('addrInterval', '15.0'))
         self.maxActive = int(config.get('maxActive', '20'))
         self.bind = config.get('bind', '')
         self.addrlist = []
+        self.config = config
 
-        for addr in config.get('addrlist', '').split(','):
+        self.updateAddrList()
+
+    def updateAddrList(self):
+        addr_file = self.config.get('addrlist_file', '')
+        if addr_file:
+            addr_list = self.addrFromYml(addr_file)
+        else:
+            addr_list = self.config.get('addrlist', '').split(',')
+
+        self.parseAddrs(addr_list)
+
+    def addrFromYml(self, addr_file):
+        import yaml
+
+        with open(addr_file, 'r') as file:
+            addr = yaml.safe_load(file)
+
+        return addr
+
+    def parseAddrs(self, addr_list):
+        clean_addrlist = []
+        for addr in addr_list:
             if not addr:
                 continue
             addr,_,port = addr.strip().partition(':')
@@ -48,11 +71,12 @@ class RecService(service.MultiService):
             else:
                 port = 5049
 
-            self.addrlist.append((addr, port))
+            clean_addrlist.append((addr, port))
 
-        if len(self.addrlist)==0:
+        if len(clean_addrlist)==0:
             self.addrlist = [('<broadcast>',5049)]
 
+        self.addrlist = clean_addrlist
 
     def privilegedStartService(self):
         
@@ -84,6 +108,9 @@ class RecService(service.MultiService):
 
         self.udp = SharedUDP(0, self.udpProto, reactor=self.reactor)
         self.udp.startListening()
+
+        # Start AddrList update
+        task.LoopingCall(self.updateAddrList).start(self.addrperiod)
 
         # This will start up plugin Processors
         service.MultiService.privilegedStartService(self)
