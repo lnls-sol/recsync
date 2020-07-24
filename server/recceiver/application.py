@@ -53,7 +53,14 @@ class RecService(service.MultiService):
         import yaml
 
         with open(addr_file, 'r') as file:
-            addr = yaml.safe_load(file)
+            machines = yaml.safe_load(file)
+
+        addr = []
+        for machine in machines:
+            try:
+                addr.append(machine['ip'] + ":5049")
+            except KeyError:
+                pass
 
         return addr
 
