@@ -43,7 +43,12 @@ class RecService(service.MultiService):
     def updateAddrList(self):
         addr_file = self.config.get('addrlist_file', '')
         if addr_file:
-            addr_list = self.addrFromYml(addr_file)
+            addr_list_yml = self.addrFromYml(addr_file)
+            addr_list_conf = self.config.get('addrlist', '').split(',')
+            if addr_list_conf:
+                addr_list = addr_list_yml + addr_list_conf
+            else:
+                addr_list = addr_list_yml
         else:
             addr_list = self.config.get('addrlist', '').split(',')
 
